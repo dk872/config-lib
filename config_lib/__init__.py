@@ -5,8 +5,8 @@ from .utils import fill_defaults, mask_secrets
 
 
 class ConfigManager:
-    def __init__(self, file_path, schema_from_user=None):
-        self.schema = schema_from_user or ConfigSchema().get_schema()
+    def __init__(self, file_path, custom_schema=None):
+        self.schema = custom_schema or ConfigSchema().get_schema()
         self.file_path = file_path
         try:
             self.config = load_config(file_path)
