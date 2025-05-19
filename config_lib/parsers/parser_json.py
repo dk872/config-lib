@@ -4,6 +4,10 @@ class JSONSyntaxError(Exception):
         super().__init__(f"{prefix}: {message}")
 
 
+def get_line_number(text, pos):
+    return text.count('\n', 0, pos) + 1
+
+
 def parse_json_string(json_str):
     json_str = json_str.strip()
 
@@ -30,4 +34,3 @@ def parse_json_string(json_str):
         raise
     except Exception as e:
         raise JSONSyntaxError(str(e))
-    
