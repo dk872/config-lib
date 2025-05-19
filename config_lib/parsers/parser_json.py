@@ -234,6 +234,43 @@ def process_comma_or_end(content, source_text, offset):
     return '', offset
 
 
+def parse_json_array(text, source_text, offset):
+    if not text.startswith('[') or not text.endswith(']'):
+        line_num = get_line_number(source_text, offset)
+        raise JSONSyntaxError("Invalid JSON array", line_num)
+
+    inner_content = text[1:-1].strip()
+    current_offset = offset + 1
+    elements = []
+
+    while inner_content:
+        value, inner_content, current_offset = parse_array_element(inner_content, source_text, current_offset)
+        elements.append(value)
+        inner_content, current_offset = process_array_separator_or_end(inner_content, source_text, current_offset)
+
+    return elements
+
+
+def parse_array_element(content, source_text, offset):
+    value, remainder = parse_json_value(content, source_text, offset)
+    consumed = len(content) - len(remainder)
+
+    return value, remainder.strip(), offset + consumed
+
+
+def process_array_separator_or_end(content, source_text, offset):
+    if content.startswith(','):
+        return content[1:].strip(), offset + 1
+    elif content.startswith(']'):
+        return '', offset
+    elif content:
+        line_num = get_line_number(source_text, offset)
+        raise JSONSyntaxError("Expected ',' or ']' or quotes after value", line_num)
+
+    return '', offset
+
+
+
 def parse_json_string(json_str):
     json_str = json_str.strip()
 
