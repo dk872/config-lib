@@ -8,6 +8,21 @@ def get_line_number(text, pos):
     return text.count('\n', 0, pos) + 1
 
 
+def find_matching_brace(text, opening, closing, source_text, offset):
+    nesting_level = 0
+
+    for index, char in enumerate(text):
+        if char == opening:
+            nesting_level += 1
+        elif char == closing:
+            nesting_level -= 1
+            if nesting_level == 0:
+                return index
+
+    line_num = get_line_number(source_text, offset)
+    raise JSONSyntaxError(f"No matching closing brace for '{opening}'", line_num)
+
+
 def parse_escape_sequence(text, index, source_text, offset):
     index += 1
     if index >= len(text):
@@ -268,7 +283,6 @@ def process_array_separator_or_end(content, source_text, offset):
         raise JSONSyntaxError("Expected ',' or ']' or quotes after value", line_num)
 
     return '', offset
-
 
 
 def parse_json_string(json_str):
