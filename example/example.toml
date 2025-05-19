@@ -1,0 +1,19 @@
+date_of_creation = 2025-05-12T14:00:00Z
+users = ["user1", "user2"]
+
+[database]
+host = "localhost"
+port = 5432
+user = "admin"
+password = "password123"
+is_active = true
+last_login = ""
+
+[logging]
+level = "debug"
+output = "logfile.txt"
+log_rotation_interval = 1.85
+
+[network]
+timeout = 30
+retries = 3
