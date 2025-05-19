@@ -8,6 +8,60 @@ def get_line_number(text, pos):
     return text.count('\n', 0, pos) + 1
 
 
+def parse_escape_sequence(text, index, source_text, offset):
+    index += 1
+    if index >= len(text):
+        line_num = get_line_number(source_text, offset + index)
+        raise JSONSyntaxError("Unexpected end after backslash", line_num)
+
+    escape_char = text[index]
+    escaped = handle_escape_sequence(escape_char, text, index, source_text, offset)
+
+    if escape_char == 'u':
+        index += 4  # Skip 4 hex digits
+
+    return index, escaped
+
+
+def handle_escape_sequence(escape_char, content, idx, original_text, start_pos):
+    if escape_char == '"':
+        return '"'
+    elif escape_char == '\\':
+        return '\\'
+    elif escape_char == '/':
+        return '/'
+    elif escape_char == 'b':
+        return '\b'
+    elif escape_char == 'f':
+        return '\f'
+    elif escape_char == 'n':
+        return '\n'
+    elif escape_char == 'r':
+        return '\r'
+    elif escape_char == 't':
+        return '\t'
+    elif escape_char == 'u':
+        return handle_unicode_escape(content, idx, original_text, start_pos)
+    else:
+        line_num = get_line_number(original_text, start_pos + idx)
+        raise JSONSyntaxError(f"Invalid escape character: \\{escape_char}", line_num)
+
+
+def handle_unicode_escape(content, idx, original_text, start_pos):
+    line_num = get_line_number(original_text, start_pos + idx)
+
+    # Expect 4 hex digits after \u
+    if idx + 4 >= len(content):
+        raise JSONSyntaxError("Incomplete unicode escape sequence", line_num)
+
+    hex_digits = content[idx + 1:idx + 5]
+
+    try:
+        return chr(int(hex_digits, 16))
+    except ValueError:
+        raise JSONSyntaxError(f"Invalid unicode escape: \\u{hex_digits}", line_num)
+
+
 def parse_json_value(content, original_text, start_pos):
     content = content.strip()
 
