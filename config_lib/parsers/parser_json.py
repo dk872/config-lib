@@ -8,6 +8,62 @@ def get_line_number(text, pos):
     return text.count('\n', 0, pos) + 1
 
 
+def parse_json_value(content, original_text, start_pos):
+    content = content.strip()
+
+    if not content:
+        line_num = get_line_number(original_text, start_pos)
+        raise JSONSyntaxError("Unexpected end of input", line_num)
+
+    if content.startswith('{'):
+        return parse_json_object_value(content, original_text, start_pos)
+    elif content.startswith('['):
+        return parse_json_array_value(content, original_text, start_pos)
+    elif content.startswith('"'):
+        return parse_json_string_value(content, original_text, start_pos)
+    elif content.startswith('true'):
+        return parse_boolean_value(content, True)
+    elif content.startswith('false'):
+        return parse_boolean_value(content, False)
+    elif content.startswith('null'):
+        return parse_null_value(content)
+    else:
+        return parse_json_number_value(content, original_text, start_pos)
+
+
+def parse_json_object_value(content, original_text, start_pos):
+    end = find_matching_brace(content, '{', '}', original_text, start_pos)
+    return parse_json_object(content[:end + 1], original_text, start_pos), content[end + 1:]
+
+
+def parse_json_array_value(content, original_text, start_pos):
+    end = find_matching_brace(content, '[', ']', original_text, start_pos)
+    return parse_json_array(content[:end + 1], original_text, start_pos), content[end + 1:]
+
+
+def parse_boolean_value(content, value):
+    return value, content[len(str(value)):]
+
+
+def parse_null_value(content):
+    return None, content[4:]
+
+
+def parse_json_number_value(content, original_text, start_pos):
+    num_str = ''
+    i = 0
+
+    while i < len(content) and (content[i].isdigit() or content[i] in '.-+eE'):
+        num_str += content[i]
+        i += 1
+
+    if not num_str:
+        line_num = get_line_number(original_text, start_pos)
+        raise JSONSyntaxError("Expected value. Possibly missing quotes for string.", line_num)
+
+    return parse_json_number(num_str, original_text, start_pos), content[i:]
+
+
 def parse_json_object(text, source_text, offset):
     if not text.startswith('{') or not text.endswith('}'):
         line_num = get_line_number(source_text, offset)
