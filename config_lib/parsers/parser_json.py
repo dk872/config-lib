@@ -62,6 +62,44 @@ def handle_unicode_escape(content, idx, original_text, start_pos):
         raise JSONSyntaxError(f"Invalid unicode escape: \\u{hex_digits}", line_num)
 
 
+def parse_json_number(text, source_text, offset):
+    raw_number, remainder_index = read_number_prefix(text)
+    validate_number_format(raw_number, source_text, offset)
+
+    try:
+        if any(c in raw_number for c in ('.', 'e', 'E')):
+            return float(raw_number)
+        return int(raw_number)
+    except ValueError:
+        line_num = get_line_number(source_text, offset + remainder_index)
+        raise JSONSyntaxError(f"Invalid number: {raw_number}", line_num)
+
+
+def read_number_prefix(text):
+    num_chars = []
+    index = 0
+
+    while index < len(text) and (text[index].isdigit() or text[index] in '-+.eE'):
+        num_chars.append(text[index])
+        index += 1
+
+    return ''.join(num_chars), index
+
+
+def validate_number_format(number_str, source_text, offset):
+    line_num = get_line_number(source_text, offset)
+
+    if number_str.startswith('0') and len(number_str) > 1 and number_str[1].isdigit():
+        raise JSONSyntaxError(f"Invalid number with leading zero: {number_str}", line_num)
+
+    if number_str.startswith('-0') and len(number_str) > 2 and number_str[2].isdigit():
+        raise JSONSyntaxError(f"Invalid negative number with leading zero: {number_str}", line_num)
+
+    if number_str.endswith('.') or number_str.startswith('.') or number_str.startswith('-.') or number_str.startswith(
+            '+.'):
+        raise JSONSyntaxError(f"Invalid float number format: {number_str}", line_num)
+
+
 def parse_json_value(content, original_text, start_pos):
     content = content.strip()
 
