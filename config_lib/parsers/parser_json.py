@@ -62,6 +62,29 @@ def handle_unicode_escape(content, idx, original_text, start_pos):
         raise JSONSyntaxError(f"Invalid unicode escape: \\u{hex_digits}", line_num)
 
 
+def parse_json_string_value(text, source_text, offset):
+    if not text.startswith('"'):
+        line_num = get_line_number(source_text, offset)
+        raise JSONSyntaxError("Expected string", line_num)
+
+    index = 1
+    result = []
+
+    while index < len(text):
+        char = text[index]
+        if char == '"':
+            return ''.join(result), text[index + 1:]
+        if char == '\\':
+            index, escaped = parse_escape_sequence(text, index, source_text, offset)
+            result.append(escaped)
+        else:
+            result.append(char)
+        index += 1
+
+    line_num = get_line_number(source_text, offset + index)
+    raise JSONSyntaxError("Unterminated string", line_num)
+
+
 def parse_json_number(text, source_text, offset):
     raw_number, remainder_index = read_number_prefix(text)
     validate_number_format(raw_number, source_text, offset)
