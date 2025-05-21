@@ -3,7 +3,6 @@ import sys
 import os
 from datetime import datetime
 
-# Add the parent directory to sys.path to allow imports from the parsers module
 sys.path.insert(0,
                 os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -35,7 +34,6 @@ class TestYAMLParser(unittest.TestCase):
         self.assertEqual(_parse_yaml_scalar('"world"'), "world")
         self.assertEqual(_parse_yaml_scalar("plain text"), "plain text")
 
-        # Date parsing
         date_str = "2023-01-15"
         expected_date = datetime(2023, 1, 15)
         self.assertEqual(_parse_yaml_scalar(date_str), expected_date)
@@ -229,7 +227,6 @@ active: true
 
     def test_indentation_errors(self):
         """Test error handling for indentation issues"""
-        # Incorrect indentation in nested structure
         yaml_str = """
 person:
   name: John
@@ -298,9 +295,6 @@ person:
                 "skills": ["programming", "design", "communication"]
             }
         }
-        # Note: This test might fail because the current implementation
-        # doesn't specifically handle multiline values with continuation indents
-        # You may need to modify the parser for this test to pass
 
     def test_empty_value(self):
         """Test handling of empty values"""
