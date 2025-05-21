@@ -39,27 +39,25 @@ def parse_escape_sequence(text, index, source_text, offset):
 
 
 def handle_escape_sequence(escape_char, content, idx, original_text, start_pos):
-    if escape_char == '"':
-        return '"'
-    elif escape_char == '\\':
-        return '\\'
-    elif escape_char == '/':
-        return '/'
-    elif escape_char == 'b':
-        return '\b'
-    elif escape_char == 'f':
-        return '\f'
-    elif escape_char == 'n':
-        return '\n'
-    elif escape_char == 'r':
-        return '\r'
-    elif escape_char == 't':
-        return '\t'
-    elif escape_char == 'u':
+    escape_mappings = {
+        '"': '"',
+        '\\': '\\',
+        '/': '/',
+        'b': '\b',
+        'f': '\f',
+        'n': '\n',
+        'r': '\r',
+        't': '\t'
+    }
+
+    if escape_char in escape_mappings:
+        return escape_mappings[escape_char]
+
+    if escape_char == 'u':
         return handle_unicode_escape(content, idx, original_text, start_pos)
-    else:
-        line_num = get_line_number(original_text, start_pos + idx)
-        raise JSONSyntaxError(f"Invalid escape character: \\{escape_char}", line_num)
+
+    line_num = get_line_number(original_text, start_pos + idx)
+    raise JSONSyntaxError(f"Invalid escape character: \\{escape_char}", line_num)
 
 
 def handle_unicode_escape(content, idx, original_text, start_pos):
@@ -73,8 +71,8 @@ def handle_unicode_escape(content, idx, original_text, start_pos):
 
     try:
         return chr(int(hex_digits, 16))
-    except ValueError:
-        raise JSONSyntaxError(f"Invalid unicode escape: \\u{hex_digits}", line_num)
+    except ValueError as exc:
+        raise JSONSyntaxError(f"Invalid unicode escape: \\u{hex_digits}", line_num) from exc
 
 
 def parse_json_string_value(text, source_text, offset):
@@ -108,9 +106,9 @@ def parse_json_number(text, source_text, offset):
         if any(c in raw_number for c in ('.', 'e', 'E')):
             return float(raw_number)
         return int(raw_number)
-    except ValueError:
+    except ValueError as exc:
         line_num = get_line_number(source_text, offset + remainder_index)
-        raise JSONSyntaxError(f"Invalid number: {raw_number}", line_num)
+        raise JSONSyntaxError(f"Invalid number: {raw_number}", line_num) from exc
 
 
 def read_number_prefix(text):
@@ -133,8 +131,12 @@ def validate_number_format(number_str, source_text, offset):
     if number_str.startswith('-0') and len(number_str) > 2 and number_str[2].isdigit():
         raise JSONSyntaxError(f"Invalid negative number with leading zero: {number_str}", line_num)
 
-    if number_str.endswith('.') or number_str.startswith('.') or number_str.startswith('-.') or number_str.startswith(
-            '+.'):
+    if (
+            number_str.endswith('.')
+            or number_str.startswith('.')
+            or number_str.startswith('-.')
+            or number_str.startswith('+.')
+    ):
         raise JSONSyntaxError(f"Invalid float number format: {number_str}", line_num)
 
 
@@ -147,18 +149,24 @@ def parse_json_value(content, original_text, start_pos):
 
     if content.startswith('{'):
         return parse_json_object_value(content, original_text, start_pos)
-    elif content.startswith('['):
+
+    if content.startswith('['):
         return parse_json_array_value(content, original_text, start_pos)
-    elif content.startswith('"'):
+
+    if content.startswith('"'):
         return parse_json_string_value(content, original_text, start_pos)
-    elif content.startswith('true'):
-        return parse_boolean_value(content, True)
-    elif content.startswith('false'):
-        return parse_boolean_value(content, False)
-    elif content.startswith('null'):
-        return parse_null_value(content)
-    else:
-        return parse_json_number_value(content, original_text, start_pos)
+
+    literal_parsers = {
+        'true': lambda: parse_boolean_value(content, True),
+        'false': lambda: parse_boolean_value(content, False),
+        'null': lambda: parse_null_value(content)
+    }
+
+    for literal, parser in literal_parsers.items():
+        if content.startswith(literal):
+            return parser()
+
+    return parse_json_number_value(content, original_text, start_pos)
 
 
 def parse_json_object_value(content, original_text, start_pos):
@@ -240,9 +248,11 @@ def parse_object_value(content, source_text, offset):
 def process_comma_or_end(content, source_text, offset):
     if content.startswith(','):
         return content[1:].strip(), offset + 1
-    elif content.startswith('}'):
+
+    if content.startswith('}'):
         return '', offset
-    elif content:
+
+    if content:
         line_num = get_line_number(source_text, offset)
         raise JSONSyntaxError("Expected ',' or '{' or quotes after value", line_num)
 
@@ -276,9 +286,11 @@ def parse_array_element(content, source_text, offset):
 def process_array_separator_or_end(content, source_text, offset):
     if content.startswith(','):
         return content[1:].strip(), offset + 1
-    elif content.startswith(']'):
+
+    if content.startswith(']'):
         return '', offset
-    elif content:
+
+    if content:
         line_num = get_line_number(source_text, offset)
         raise JSONSyntaxError("Expected ',' or ']' or quotes after value", line_num)
 
@@ -294,20 +306,27 @@ def parse_json_string(json_str):
     try:
         if json_str.startswith('{'):
             return parse_json_object(json_str, json_str, 0)
-        elif json_str.startswith('['):
+
+        if json_str.startswith('['):
             return parse_json_array(json_str, json_str, 0)
-        elif json_str.startswith('"'):
+
+        if json_str.startswith('"'):
             value, _ = parse_json_string_value(json_str, json_str, 0)
             return value
-        elif json_str.startswith('true'):
-            return True
-        elif json_str.startswith('false'):
-            return False
-        elif json_str.startswith('null'):
-            return None
-        else:
-            return parse_json_number(json_str, json_str, 0)
+
+        literal_parsers = {
+            'true': True,
+            'false': False,
+            'null': None
+        }
+
+        for literal, value in literal_parsers.items():
+            if json_str.startswith(literal):
+                return value
+
+        return parse_json_number(json_str, json_str, 0)
+
     except JSONSyntaxError:
         raise
-    except Exception as e:
-        raise JSONSyntaxError(str(e))
+    except Exception as exc:
+        raise JSONSyntaxError(str(exc)) from exc
