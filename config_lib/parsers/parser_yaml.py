@@ -33,7 +33,6 @@ def _strip_inline_comment(text):
 
 
 def _parse_yaml_scalar(value):
-    # First strip any inline comments
     value = _strip_inline_comment(value)
 
     value = value.strip()
@@ -70,7 +69,7 @@ def _parse_yaml_lines(lines, indent=0, base_index=0):
 
         current_indent = len(line) - len(line.lstrip())
 
-        # Check for consistent indentation within the same level
+        # check for consistent indentation within the same level
         if expected_indent is not None and current_indent != indent and current_indent > 0:
             if current_indent != expected_indent:
                 if line.lstrip().startswith('age:'):
