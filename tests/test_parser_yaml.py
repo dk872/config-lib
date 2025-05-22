@@ -1,11 +1,5 @@
 import unittest
-import sys
-import os
 from datetime import datetime
-
-sys.path.insert(0,
-                os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from config_lib.parsers.parser_yaml import (parse_yaml_string, YAMLSyntaxError,
                                             _parse_yaml_scalar,
                                             _parse_yaml_lines)
@@ -41,6 +35,83 @@ class TestYAMLParser(unittest.TestCase):
         datetime_str = "2023-01-15T14:30:45"
         expected_datetime = datetime(2023, 1, 15, 14, 30, 45)
         self.assertEqual(_parse_yaml_scalar(datetime_str), expected_datetime)
+
+    def test_parse_exponential_numbers(self):
+        """Test parsing of numbers with exponential notation"""
+        # Test basic exponential notation with lowercase 'e'
+        self.assertEqual(_parse_yaml_scalar("1e5"), 1e5)  # 100000.0
+        self.assertEqual(_parse_yaml_scalar("2e3"), 2e3)  # 2000.0
+        self.assertEqual(_parse_yaml_scalar("5e0"), 5e0)  # 5.0
+
+        # Test exponential notation with uppercase 'E'
+        self.assertEqual(_parse_yaml_scalar("1E5"), 1E5)  # 100000.0
+        self.assertEqual(_parse_yaml_scalar("3E2"), 3E2)  # 300.0
+        self.assertEqual(_parse_yaml_scalar("7E0"), 7E0)  # 7.0
+
+        # Test negative exponents
+        self.assertEqual(_parse_yaml_scalar("2.5e-3"), 2.5e-3)  # 0.0025
+        self.assertEqual(_parse_yaml_scalar("1e-6"), 1e-6)  # 0.000001
+        self.assertEqual(_parse_yaml_scalar("4.2E-2"), 4.2E-2)  # 0.042
+
+        # Test positive exponents with explicit plus sign
+        self.assertEqual(_parse_yaml_scalar("3E+2"), 3E+2)  # 300.0
+        self.assertEqual(_parse_yaml_scalar("1.5e+4"), 1.5e+4)  # 15000.0
+        self.assertEqual(_parse_yaml_scalar("2.0E+1"), 2.0E+1)  # 20.0
+
+        # Test decimal numbers with exponents
+        self.assertEqual(_parse_yaml_scalar("1.23e4"), 1.23e4)  # 12300.0
+        self.assertEqual(_parse_yaml_scalar("9.876E-5"),
+                         9.876E-5)  # 0.00009876
+        self.assertEqual(_parse_yaml_scalar("0.5e2"), 0.5e2)  # 50.0
+
+        # Test negative numbers with exponents
+        self.assertEqual(_parse_yaml_scalar("-1e5"), -1e5)  # -100000.0
+        self.assertEqual(_parse_yaml_scalar("-2.5e-3"), -2.5e-3)  # -0.0025
+        self.assertEqual(_parse_yaml_scalar("-3E+2"), -3E+2)  # -300.0
+
+        # Test edge cases
+        self.assertEqual(_parse_yaml_scalar("0e5"), 0e5)  # 0.0
+        self.assertEqual(_parse_yaml_scalar("0.0e-10"), 0.0e-10)  # 0.0
+
+    def test_exponential_numbers_in_yaml_structure(self):
+        """Test exponential numbers within YAML structures"""
+        yaml_str = """
+scientific_data:
+  avogadro_number: 6.022e23
+  planck_constant: 6.626E-34
+  speed_of_light: 2.998e+8
+  very_small: 1.5e-15
+  very_large: 3E+12
+  negative_exp: -4.2e-6
+measurements:
+  - value: 1.23e4
+    unit: meters
+  - value: 5.67E-3
+    unit: seconds
+  - value: 9.8e+0
+    unit: m/s2
+"""
+        expected = {
+            "scientific_data": {
+                "avogadro_number": 6.022e23,
+                "planck_constant": 6.626E-34,
+                "speed_of_light": 2.998e+8,
+                "very_small": 1.5e-15,
+                "very_large": 3E+12,
+                "negative_exp": -4.2e-6
+            },
+            "measurements": [{
+                "value": 1.23e4,
+                "unit": "meters"
+            }, {
+                "value": 5.67E-3,
+                "unit": "seconds"
+            }, {
+                "value": 9.8e+0,
+                "unit": "m/s2"
+            }]
+        }
+        self.assertEqual(parse_yaml_string(yaml_str), expected)
 
     def test_simple_dict(self):
         """Test parsing a simple dictionary"""
