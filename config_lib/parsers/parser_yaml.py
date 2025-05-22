@@ -67,10 +67,9 @@ def _validate_indentation(current_indent, expected_indent, indent, line,
                 raise YAMLSyntaxError(
                     f"Inconsistent indentation. Expected {expected_indent} spaces, got {current_indent}",
                     line_number - 1)
-            else:
-                raise YAMLSyntaxError(
-                    f"Inconsistent indentation. Expected {expected_indent} spaces, got {current_indent}",
-                    line_number)
+            raise YAMLSyntaxError(
+                f"Inconsistent indentation. Expected {expected_indent} spaces, got {current_indent}",
+                line_number)
 
 
 def _collect_nested_lines(lines, start_index, min_indent):
@@ -126,7 +125,7 @@ def _parse_list_item(line, current_indent, lines, index, base_index, result):
 
     if result is None:
         result = []
-    elif not isinstance(result, list):
+    if not isinstance(result, list):
         raise YAMLSyntaxError("Mixed list and dict structures are not allowed",
                               line_number)
 
@@ -138,18 +137,16 @@ def _parse_list_item(line, current_indent, lines, index, base_index, result):
             item_line, current_indent, lines, index, base_index)
         result.append(item_dict)
         return result, new_index
-
-    elif item_line == '':
+    if item_line == '':
         sub_lines, new_index = _collect_nested_lines(lines, index + 1,
                                                      current_indent)
         nested_value = _parse_yaml_lines(sub_lines, current_item_indent,
                                          base_index + index + 1)
         result.append(nested_value)
         return result, new_index - 1
+    result.append(_parse_yaml_scalar(item_line))
 
-    else:
-        result.append(_parse_yaml_scalar(item_line))
-        return result, index
+    return result, index
 
 
 def _parse_key_value_pair(line, current_indent, lines, index, base_index,
@@ -158,7 +155,7 @@ def _parse_key_value_pair(line, current_indent, lines, index, base_index,
 
     if result is None:
         result = {}
-    elif not isinstance(result, dict):
+    if not isinstance(result, dict):
         raise YAMLSyntaxError("Mixed list and dict structures are not allowed",
                               line_number)
 
@@ -173,16 +170,14 @@ def _parse_key_value_pair(line, current_indent, lines, index, base_index,
 
     if not key:
         raise YAMLSyntaxError("Empty key", line_number)
-
     if value == '':
         sub_lines, new_index = _collect_nested_lines(lines, index + 1,
                                                      current_indent)
         result[key] = _parse_yaml_lines(sub_lines, current_indent + 2,
                                         base_index + index + 1)
         return result, new_index - 1
-    else:
-        result[key] = _parse_yaml_scalar(value)
-        return result, index
+    result[key] = _parse_yaml_scalar(value)
+    return result, index
 
 
 def _parse_yaml_lines(lines, indent=0, base_index=0):
