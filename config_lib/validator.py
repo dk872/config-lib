@@ -1,8 +1,8 @@
 from datetime import datetime
+import re
 
 
 class ConfigValidator:
-
     def __init__(self, schema):
         self.schema = schema
 
@@ -11,71 +11,66 @@ class ConfigValidator:
         return True
 
     def _validate_dict(self, config, schema, path=""):
-        if not isinstance(config, dict):
-            raise ValueError(f"{path or 'root'} must be a dictionary")
-
         for key, rules in schema.items():
             full_path = self._format_path(path, key)
-            required = rules.get("required", False)
-            has_value = key in config
+            if rules.get("required", False) and key not in config:
+                raise ValueError(f"Missing required key: {full_path}")
+            if key in config:
+                value = config[key]
+                expected_type = rules["type"]
 
-            if not has_value:
-                if required:
-                    raise ValueError(f"Missing required field: {full_path}")
-                elif "default" in rules:
-                    config[key] = rules["default"]
-                continue
+                if expected_type is dict and "schema" in rules:
+                    if not isinstance(value, dict):
+                        raise TypeError(f"Incorrect type for key {full_path}: expected dict, got {type(value).__name__}")
+                    self._validate_dict(value, rules["schema"], full_path)
+                elif expected_type is list:
+                    self._validate_list(value, rules["items"], full_path)
+                elif expected_type is str and rules.get("format") == "date":
+                    self._validate_date(value, full_path)
+                else:
+                    self._validate_type(expected_type, value, full_path)
 
-            value = config[key]
-            expected_type = rules.get("type")
-
-            if expected_type == "dict":
-                self._validate_type("dict", value, full_path)
-                self._validate_dict(value, rules.get("schema", {}), full_path)
-
-            elif expected_type == "list":
-                self._validate_list(value, rules, full_path)
-
-            elif expected_type == "date":
-                self._validate_date(value, full_path)
-
-            else:
-                self._validate_type(expected_type, value, full_path)
+        for key in config:
+            if key not in schema:
+                raise ValueError(f"Extra key found: {self._format_path(path, key)}")
 
     def _validate_list(self, value, item_schema, path):
         if not isinstance(value, list):
-            raise ValueError(f"{path} must be a list")
-
-        expected_type = item_schema.get("item_type", "str")
+            raise TypeError(f"Incorrect type for key {path}: expected list, got {type(value).__name__}")
         for i, item in enumerate(value):
-            self._validate_type(expected_type, item,
-                                self._format_path(path, str(i)))
+            item_path = f"{path}[{i}]"
+            self._validate_type(item_schema["type"], item, item_path)
 
     @staticmethod
     def _validate_date(value, path):
+        if isinstance(value, datetime):
+            return
+
         if not isinstance(value, str):
-            raise ValueError(f"{path} must be a string in ISO 8601 format")
+            raise TypeError(f"Incorrect type for key {path}: expected ISO 8601 str or datetime")
+
+        iso_z_pattern = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"
+        if not re.match(iso_z_pattern, value):
+            raise ValueError(
+                f"Incorrect date format for key {path}: expected YYYY-MM-DDTHH:MM:SSZ"
+            )
 
         try:
-            datetime.fromisoformat(value)
+            datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
         except ValueError:
-            raise ValueError(f"{path} must be a valid ISO 8601 date string")
+            raise ValueError(f"Invalid datetime value for key {path}")
 
     @staticmethod
     def _validate_type(expected_type, actual_value, path):
-        python_type = {
-            "str": str,
-            "int": int,
-            "bool": bool,
-            "dict": dict,
-            "list": list
-        }.get(expected_type)
+        if expected_type is int and isinstance(actual_value, bool):
+            raise TypeError(f"Incorrect type for key {path}: expected int, got bool")
 
-        if python_type is None:
-            raise ValueError(f"Unknown expected type: {expected_type}")
-
-        if not isinstance(actual_value, python_type):
-            raise ValueError(f"{path} must be of type {expected_type}")
+        if not isinstance(actual_value, expected_type):
+            if isinstance(expected_type, tuple):
+                type_names = ", ".join(t.__name__ for t in expected_type)
+            else:
+                type_names = expected_type.__name__
+            raise TypeError(f"Incorrect type for key {path}: expected {type_names}, got {type(actual_value).__name__}")
 
     @staticmethod
     def _format_path(path, key):
