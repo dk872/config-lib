@@ -1,28 +1,75 @@
 DEFAULT_SCHEMA = {
-    # TODO: Схема налаштувань бази даних з обовʼязковими полями та типовими значеннями.
     "database": {
-        # TODO: Вказати тип словника, обовʼязковість і вкладену схему.
+        "type": "dict",
+        "required": True,
+        "schema": {
+            "host": {
+                "type": "str",
+                "required": True
+            },
+            "port": {
+                "type": "int",
+                "required": True
+            },
+            "user": {
+                "type": "str",
+                "required": True
+            },
+            "password": {
+                "type": "str",
+                "required": True
+            }
+        }
     },
-    # TODO: Схема налаштувань логування з рівнем, виводом та інтервалом ротації логів.
     "logging": {
-        # TODO: Вказати тип словника, обовʼязковість і вкладену схему.
+        "type": "dict",
+        "required": False,
+        "schema": {
+            "level": {
+                "type": "str",
+                "required": True
+            },
+            "output": {
+                "type": "str",
+                "required": True
+            },
+            "rotation_interval": {
+                "type": "int",
+                "required": False,
+                "default": 7
+            }
+        }
     },
-    # TODO: Схема мережевих налаштувань (таймаут і кількість спроб).
     "network": {
-        # TODO: Вказати тип словника, обовʼязковість і вкладену схему.
+        "type": "dict",
+        "required": False,
+        "schema": {
+            "timeout": {
+                "type": "int",
+                "required": False,
+                "default": 30
+            },
+            "retries": {
+                "type": "int",
+                "required": False,
+                "default": 3
+            }
+        }
     },
-    # TODO: Обовʼязкове поле з датою створення у форматі дати.
     "date_of_creation": {
-        # TODO: Вказати тип рядка, обовʼязковість і формат.
+        "type": "date",
+        "required": True
     },
-    # TODO: Обовʼязковий список користувачів (рядки).
     "users": {
-        # TODO: Вказати тип списку, обовʼязковість і тип елементів.
-    },
+        "type": "list",
+        "required": True,
+        "item_type": "str"
+    }
 }
 
 
 class ConfigSchema:
+
     def __init__(self, schema=None):
         self.schema = schema or DEFAULT_SCHEMA
 
