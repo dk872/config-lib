@@ -4,7 +4,7 @@ DEFAULT_SCHEMA = {
         "required": True,
         "schema": {
             "host": {"type": str, "required": True, "default": "localhost"},
-            "port": {"type": int, "required": True, "default": 532},
+            "port": {"type": int, "required": True, "default": 5432},
             "user": {"type": str, "required": True, "default": "admin"},
             "password": {"type": str, "required": True},
             "is_active": {"type": bool, "required": True, "default": True},
