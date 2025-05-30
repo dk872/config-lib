@@ -295,38 +295,3 @@ def parse_toml_string(toml_str: str) -> Dict[str, Any]:
     """Parse a TOML string and return the resulting dictionary."""
     parser = TOMLParser()
     return parser.parse(toml_str)
-
-# Example usage and testing
-if __name__ == "__main__":
-    test_toml = '''
-# This is a comment
-title = "My App"
-version = 1.2
-debug = true
-
-[database]
-host = "localhost"
-port = 5432
-enabled = true
-
-[database.credentials]
-username = "admin"
-password = "secret123"
-
-[servers]
-alpha = "192.168.1.1"
-beta = "192.168.1.2"
-
-[data]
-numbers = [1, 2, 3, 4]
-strings = ["hello", "world"]
-mixed = [1, "two", true]
-'''
-    
-    try:
-        result = parse_toml_string(test_toml)
-        print("Parsed TOML:")
-        import json
-        print(json.dumps(result, indent=2))
-    except TOMLSyntaxError as e:
-        print(f"Error: {e}")
