@@ -42,16 +42,24 @@ def _set_ini_nested_section(result, dotted_path):
     keys = dotted_path.split(".")
     ref = result
     for key in keys:
+        if key in ref and not isinstance(ref[key], dict):
+            raise INISyntaxError(
+                f"Cannot create section '{dotted_path}': '{key}' already exists as non-section value"
+            )
         ref = ref.setdefault(key, {})
 
 
 def _get_ini_nested_section(result, dotted_path):
     keys = dotted_path.split(".")
     ref = result
+
     for key in keys:
         if key not in ref:
-            raise INISyntaxError(f"Section '{key}' not found in path '{dotted_path}'", 0)
+            raise INISyntaxError(f"Section '{key}' not found in path '{dotted_path}'")
+        if not isinstance(ref[key], dict):
+            raise INISyntaxError(f"'{key}' in path '{dotted_path}' is not a section")
         ref = ref[key]
+
     return ref
 
 
@@ -63,8 +71,8 @@ def _infer_ini_type(value):
     if "," in value:
         return [v.strip() for v in value.split(",")]
     try:
-        if '.' in value:
-            return float(value)
-        return int(value)
+        if '.' not in value:
+            return int(value)
+        return float(value)
     except ValueError:
         return value
