@@ -48,7 +48,6 @@ class ConfigManager:
         try:
             db_handler = MongoDBHandler(mongo_uri, db_name, collection_name)
             db_handler.save_config(name, self.config)
-
         except Exception as e:
             print(f"Error saving configuration: {e}")
 
