@@ -6,13 +6,16 @@ from .db import MongoDBHandler
 
 
 class ConfigManager:
-    def __init__(self, file_path, custom_schema=None):
+    def __init__(self, file_path=None, custom_schema=None):
         self.schema = custom_schema or ConfigSchema().get_schema()
         self.file_path = file_path
-        try:
-            self.config = load_config(file_path)
-        except Exception as e:
-            raise RuntimeError(f"Parse error from {file_path}: {e}")
+        self.config = None
+
+        if file_path:
+            try:
+                self.config = load_config(file_path)
+            except Exception as e:
+                raise RuntimeError(f"Parse error from {file_path}: {e}")
 
     def validate(self):
         if self.config is None:
