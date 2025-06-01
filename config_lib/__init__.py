@@ -2,6 +2,7 @@ from .loader import load_config
 from .schema import ConfigSchema
 from .validator import ConfigValidator
 from .utils import fill_defaults, mask_secrets
+from .db import MongoDBHandler
 
 
 class ConfigManager:
@@ -35,3 +36,29 @@ class ConfigManager:
 
     def apply_defaults(self):
         self.config = fill_defaults(self.config, self.schema)
+
+    def save_to_db(self, name, mongo_uri, db_name, collection_name="configs"):
+        if self.config is None:
+            print("Error: No configuration loaded to save")
+            return
+
+        try:
+            db_handler = MongoDBHandler(mongo_uri, db_name, collection_name)
+            db_handler.save_config(name, self.config)
+
+        except Exception as e:
+            print(f"Error saving configuration: {e}")
+
+    def load_from_db(self, name, mongo_uri, db_name, collection_name="configs"):
+        try:
+            db_handler = MongoDBHandler(mongo_uri, db_name, collection_name)
+            self.config = db_handler.load_config(name)
+        except Exception as e:
+            print(f"Error loading configuration: {e}")
+
+    def delete_from_db(self, name, mongo_uri, db_name, collection_name="configs"):
+        try:
+            db_handler = MongoDBHandler(mongo_uri, db_name, collection_name)
+            db_handler.delete_config(name)
+        except Exception as e:
+            print(f"Error deleting configuration: {e}")
