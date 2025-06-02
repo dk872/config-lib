@@ -18,21 +18,21 @@ class TestTOMLParser(unittest.TestCase):
     def test_example_toml_file(self):
         """Test parsing the provided example TOML file."""
         example_toml = '''date_of_creation = 2025-05-12T14:00:00Z
-users = ["user1", "user2"]
-[database]
-host = "localhost"
-port = 5432
-user = "admin"
-password = "password123"
-is_active = true
-last_login = ""
-[logging]
-level = "debug"
-output = "logfile.txt"
-log_rotation_interval = 1.85
-[network]
-timeout = 30
-retries = 3'''
+            users = ["user1", "user2"]
+            [database]
+            host = "localhost"
+            port = 5432
+            user = "admin"
+            password = "password123"
+            is_active = true
+            last_login = ""
+            [logging]
+            level = "debug"
+            output = "logfile.txt"
+            log_rotation_interval = 1.85
+            [network]
+            timeout = 30
+            retries = 3'''
         
         result = self.parser.parse(example_toml)
         

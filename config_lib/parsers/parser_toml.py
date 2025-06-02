@@ -1,5 +1,39 @@
 import re
 from typing import Dict, Any, List, Union
+from datetime import datetime
+
+_ESCAPE_MAP = {
+    '"': '"',
+    '\\': '\\',
+    '/': '/',
+    'b': '\b',
+    'f': '\f',
+    'n': '\n',
+    'r': '\r',
+    't': '\t',
+}
+
+class JSONSyntaxError(Exception):
+    """Custom exception for JSON syntax errors."""
+    pass
+
+def get_line_number(text, position):
+    """Get line number for a given position in text."""
+    return text[:position].count('\n') + 1
+
+def handle_unicode_escape(content, idx, original_text, start_pos):
+    """Handle unicode escape sequences like \\uXXXX."""
+    if idx + 4 >= len(content):
+        line_num = get_line_number(original_text, start_pos + idx)
+        raise JSONSyntaxError("Incomplete unicode escape sequence", line_num)
+    
+    hex_digits = content[idx+1:idx+5]
+    try:
+        code_point = int(hex_digits, 16)
+        return chr(code_point)
+    except ValueError:
+        line_num = get_line_number(original_text, start_pos + idx)
+        raise JSONSyntaxError(f"Invalid unicode escape sequence: \\u{hex_digits}", line_num)
 
 class TOMLSyntaxError(Exception):
     """Custom exception for TOML parsing errors."""
@@ -146,6 +180,16 @@ class TOMLParser:
         return (value_str.startswith('"') and value_str.endswith('"')) or \
                (value_str.startswith("'") and value_str.endswith("'"))
     
+    def _handle_escape_sequence(self, escape_char, content, idx, original_text, start_pos):
+        """Handle escape sequences in strings."""
+        if escape_char == 'u':
+            return handle_unicode_escape(content, idx, original_text, start_pos)
+        try:
+            return _ESCAPE_MAP[escape_char]
+        except KeyError:
+            line_num = get_line_number(original_text, start_pos + idx)
+            raise JSONSyntaxError(f"Invalid escape character: \\{escape_char}", line_num)
+
     def _parse_string(self, value_str: str) -> str:
         """Parse a quoted string value."""
         if len(value_str) < 2:
@@ -155,27 +199,34 @@ class TOMLParser:
         if value_str[-1] != quote_char:
             raise TOMLSyntaxError(f"Mismatched quotes in string", self.line_number)
         
-        # Basic string parsing with proper escape sequence handling
+        # String parsing with proper escape sequence handling
         inner = value_str[1:-1]
         result = ""
         i = 0
         while i < len(inner):
             if inner[i] == '\\' and i + 1 < len(inner):
                 next_char = inner[i + 1]
-                if next_char == 'n':
-                    result += '\n'
-                elif next_char == 't':
-                    result += '\t'
-                elif next_char == '"':
-                    result += '"'
-                elif next_char == "'":
-                    result += "'"
-                elif next_char == '\\':
-                    result += '\\'
+                # Handle basic escape sequences
+                if next_char in _ESCAPE_MAP:
+                    result += _ESCAPE_MAP[next_char]
+                    i += 2
+                elif next_char == quote_char:
+                    # Handle escaped quote character (e.g., \' in single quotes, \" in double quotes)
+                    result += quote_char
+                    i += 2
+                elif next_char == 'u' and i + 5 < len(inner):
+                    # Handle unicode escape sequences
+                    try:
+                        hex_digits = inner[i+2:i+6]
+                        code_point = int(hex_digits, 16)
+                        result += chr(code_point)
+                        i += 6
+                    except ValueError:
+                        raise TOMLSyntaxError(f"Invalid unicode escape sequence: \\u{hex_digits}", self.line_number)
                 else:
-                    # Unknown escape sequence, keep as is
+                    # For unknown escape sequences, include the backslash and character
                     result += '\\' + next_char
-                i += 2  # Skip both the backslash and the next character
+                    i += 2
             else:
                 result += inner[i]
                 i += 1
@@ -253,6 +304,14 @@ class TOMLParser:
         
         return None
     
+    def _looks_like_datetime(self, value_str: str) -> bool:
+        """Basic check if value looks like a datetime."""
+        try:
+            datetime.fromisoformat(value_str)
+            return True
+        except ValueError:
+            return False
+    
     def _strip_end_of_line_comment(self, value_str: str) -> str:
         """Strip end-of-line comments while respecting quoted strings."""
         result = ""
@@ -285,10 +344,6 @@ class TOMLParser:
             i += 1
         
         return result.strip()
-
-    def _looks_like_datetime(self, value_str: str) -> bool:
-        """Basic check if value looks like a datetime."""
-        return bool(re.match(r'^\d{4}-\d{2}-\d{2}([Tt\s]\d{2}:\d{2}:\d{2})?', value_str))
 
 # Convenience function
 def parse_toml_string(toml_str: str) -> Dict[str, Any]:
