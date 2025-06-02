@@ -14,7 +14,7 @@ class ConfigManager:
 
         if file_path:
                 if not os.path.isfile(file_path):
-                raise FileNotFoundError(f"File not found: {file_path}")
+                    raise FileNotFoundError(f"File not found: {file_path}")
             
             try:
                 self.config = load_config(file_path)
