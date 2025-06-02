@@ -3,6 +3,7 @@ from .schema import ConfigSchema
 from .validator import ConfigValidator
 from .utils import fill_defaults, mask_secrets
 from .db import MongoDBHandler
+import os
 
 
 class ConfigManager:
@@ -12,6 +13,9 @@ class ConfigManager:
         self.config = None
 
         if file_path:
+                if not os.path.isfile(file_path):
+                raise FileNotFoundError(f"File not found: {file_path}")
+            
             try:
                 self.config = load_config(file_path)
             except Exception as e:
