@@ -9,12 +9,14 @@ def is_iso_datetime(value: str) -> bool:
 def format_yaml_value(value):
     if isinstance(value, bool):
         return "true" if value else "false"
-    elif value is None:
+
+    if value is None:
         return "null"
-    elif isinstance(value, str):
+
+    if isinstance(value, str):
         return value if is_iso_datetime(value) else f'"{value}"'
-    else:
-        return str(value)
+
+    return str(value)
 
 
 def serialize_yaml(config, indent=0):

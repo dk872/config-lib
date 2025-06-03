@@ -4,23 +4,28 @@ def serialize_ini(config):
 
     lines = []
     for section, values in config.items():
-        if isinstance(values, dict):
-            lines.append(f"[{section}]")
-            for key, value in values.items():
-                if isinstance(value, bool):
-                    val = "true" if value else "false"
-                elif value is None:
-                    val = "null"
-                else:
-                    val = value
-                lines.append(f"{key} = {val}")
-            lines.append("")
-        else:
-            if isinstance(values, bool):
-                val = "true" if values else "false"
-            elif values is None:
-                val = "null"
-            else:
-                val = values
-            lines.append(f"{section} = {val}")
+        lines.extend(_serialize_section(section, values))
     return lines
+
+
+def _serialize_section(section, values):
+    lines = []
+
+    if isinstance(values, dict):
+        lines.append(f"[{section}]")
+        for key, value in values.items():
+            lines.append(f"{key} = {serialize_value(value)}")
+        lines.append("")
+    else:
+        lines.append(f"{section} = {serialize_value(values)}")
+
+    return lines
+
+
+def serialize_value(value):
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    elif value is None:
+        return "null"
+    else:
+        return str(value)

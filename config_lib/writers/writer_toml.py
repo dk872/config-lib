@@ -11,13 +11,17 @@ def format_toml_value(value):
         if is_iso_datetime(value):
             return value
         return f'"{value}"'
-    elif isinstance(value, bool):
+
+    if isinstance(value, bool):
         return "true" if value else "false"
-    elif value is None:
+
+    if value is None:
         return '""'
-    elif isinstance(value, list):
+
+    if isinstance(value, list):
         items = ", ".join(format_toml_value(v) for v in value)
         return f"[{items}]"
+
     return str(value)
 
 
