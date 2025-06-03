@@ -1,3 +1,22 @@
+def handle_missing_key(rules, full_path):
+    if "default" in rules:
+        return rules["default"]
+    elif rules.get("type") == dict:
+        return fill_defaults({}, rules.get("schema", {}), path=full_path)
+    return None
+
+
+def handle_existing_key(value, rules, full_path):
+    has_default = "default" in rules
+    expected_type = rules.get("type")
+
+    if (value is None or value == "") and has_default:
+        return rules["default"]
+    elif expected_type == dict and isinstance(value, dict):
+        return fill_defaults(value, rules.get("schema", {}), path=full_path)
+    return value
+
+
 def fill_defaults(config, schema, path=""):
     if not isinstance(schema, dict):
         return config
@@ -6,22 +25,13 @@ def fill_defaults(config, schema, path=""):
 
     for key, rules in schema.items():
         full_path = f"{path}.{key}" if path else key
-        expected_type = rules.get("type")
-        has_default = "default" in rules
-        default_value = rules.get("default")
 
         if key not in filled:
-            if has_default:
-                filled[key] = default_value
-            elif expected_type == dict:
-                filled[key] = fill_defaults({}, rules.get("schema", {}), path=full_path)
+            value = handle_missing_key(rules, full_path)
+            if value is not None:
+                filled[key] = value
         else:
-            current_value = filled[key]
-
-            if (current_value is None or current_value == "") and has_default:
-                filled[key] = default_value
-            elif expected_type == dict and isinstance(current_value, dict):
-                filled[key] = fill_defaults(current_value, rules.get("schema", {}), path=full_path)
+            filled[key] = handle_existing_key(filled[key], rules, full_path)
 
     return filled
 

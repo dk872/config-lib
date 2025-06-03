@@ -2,7 +2,6 @@ import pytest
 from config_lib.validator import ConfigValidator
 
 
-
 def test_valid_simple_dict():
     schema = {
         "name": {
