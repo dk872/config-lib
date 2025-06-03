@@ -1,23 +1,42 @@
 DEFAULT_SCHEMA = {
-    # TODO: Схема налаштувань бази даних з обовʼязковими полями та типовими значеннями.
     "database": {
-        # TODO: Вказати тип словника, обовʼязковість і вкладену схему.
+        "type": dict,
+        "required": True,
+        "schema": {
+            "host": {"type": str, "required": True, "default": "localhost"},
+            "port": {"type": int, "required": True, "default": 5432},
+            "user": {"type": str, "required": True, "default": "admin"},
+            "password": {"type": str, "required": True},
+            "is_active": {"type": bool, "required": True, "default": True},
+            "last_login": {"type": (str, type(None)), "required": True, "default": None},
+        },
     },
-    # TODO: Схема налаштувань логування з рівнем, виводом та інтервалом ротації логів.
     "logging": {
-        # TODO: Вказати тип словника, обовʼязковість і вкладену схему.
+        "type": dict,
+        "required": True,
+        "schema": {
+            "level": {"type": str, "required": True, "default": "INFO"},
+            "output": {"type": str, "required": True, "default": "stdout"},
+            "log_rotation_interval": {"type": (float, int), "required": True, "default": 24.0},
+        },
     },
-    # TODO: Схема мережевих налаштувань (таймаут і кількість спроб).
     "network": {
-        # TODO: Вказати тип словника, обовʼязковість і вкладену схему.
+        "type": dict,
+        "required": True,
+        "schema": {
+            "timeout": {"type": int, "required": False, "default": 30},
+            "retries": {"type": int, "required": True, "default": 3},
+        },
     },
-    # TODO: Обовʼязкове поле з датою створення у форматі дати.
     "date_of_creation": {
-        # TODO: Вказати тип рядка, обовʼязковість і формат.
+        "type": str,
+        "required": True,
+        "format": "date",
     },
-    # TODO: Обовʼязковий список користувачів (рядки).
     "users": {
-        # TODO: Вказати тип списку, обовʼязковість і тип елементів.
+        "type": list,
+        "required": True,
+        "items": {"type": str},
     },
 }
 
