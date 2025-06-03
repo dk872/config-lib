@@ -1,0 +1,23 @@
+[project]
+name = "config_lib"
+version = "0.1.0"
+description = "A flexible configuration manager supporting multiple formats with schema validation"
+authors = [
+    { name = "Dmytro Kulyk", email = "dimakulyk2005@gmail.com" },
+    { name = "Samoilenko Mariia", email = "mariia.samoilenko.06@gmail.com" },
+    { name = "Kaliberda Anton", email = "peckpech07@gmail.com" },
+    { name = "Vakhnina Yulianna", email = "yuliannabd@gmail.com" }
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "pymongo>=4.13.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/dk872/config-lib"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
