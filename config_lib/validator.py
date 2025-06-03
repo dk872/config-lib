@@ -57,8 +57,8 @@ class ConfigValidator:
 
         try:
             datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
-        except ValueError:
-            raise ValueError(f"Invalid datetime value for key {path}")
+        except ValueError as exc:
+            raise ValueError(f"Invalid datetime value for key {path}") from exc
 
     @staticmethod
     def _validate_type(expected_type, actual_value, path):

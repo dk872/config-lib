@@ -202,8 +202,9 @@ class TOMLParser:
             hex_digits = s[i + 2:i + 6]
             try:
                 return chr(int(hex_digits, 16)), 6
-            except ValueError:
-                raise TOMLSyntaxError(f"Invalid unicode escape sequence: \\u{hex_digits}", self.line_number)
+            except ValueError as exc:
+                raise TOMLSyntaxError(f"Invalid unicode escape sequence: \\u{hex_digits}",
+                                      self.line_number) from exc
 
         # Unknown escape sequence
         return '\\' + next_char, 2

@@ -16,8 +16,8 @@ class MongoDBHandler:
             self.client = MongoClient(self.mongo_uri)
             self.db = self.client[self.db_name]
             self.collection = self.db[self.collection_name]
-        except errors.ConnectionFailure as e:
-            raise RuntimeError(f"Could not connect to MongoDB: {e}")
+        except errors.ConnectionFailure as exc:
+            raise RuntimeError(f"Could not connect to MongoDB: {exc}") from exc
 
     def save_config(self, name, config):
         try:
@@ -35,8 +35,8 @@ class MongoDBHandler:
                 print(f"Configuration already up-to-date for name: '{name}'")
 
             return result
-        except errors.PyMongoError as e:
-            raise RuntimeError(f"MongoDB save error: {e}")
+        except errors.PyMongoError as exc:
+            raise RuntimeError(f"MongoDB save error: {exc}") from exc
 
     def load_config(self, name):
         try:
@@ -47,8 +47,8 @@ class MongoDBHandler:
             print(f"Configuration loaded successfully for name: '{name}'")
 
             return doc["config"]
-        except errors.PyMongoError as e:
-            raise RuntimeError(f"MongoDB load error: {e}")
+        except errors.PyMongoError as exc:
+            raise RuntimeError(f"MongoDB load error: {exc}") from exc
 
     def delete_config(self, name):
         try:
@@ -60,5 +60,5 @@ class MongoDBHandler:
                 print(f"Configuration with name '{name}' deleted successfully")
 
             return result.deleted_count
-        except errors.PyMongoError as e:
-            raise RuntimeError(f"MongoDB delete error: {e}")
+        except errors.PyMongoError as exc:
+            raise RuntimeError(f"MongoDB delete error: {exc}") from exc

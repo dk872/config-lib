@@ -15,11 +15,11 @@ class ConfigManager:
         if file_path:
             if not os.path.isfile(file_path):
                 raise FileNotFoundError(f"File not found: {file_path}")
-            
+
             try:
                 self.config = load_config(file_path)
-            except Exception as e:
-                raise RuntimeError(f"Parse error from {file_path}: {e}")
+            except Exception as exc:
+                raise RuntimeError(f"Parse error from {file_path}: {exc}") from exc
 
     def validate(self):
         if self.config is None:
@@ -29,9 +29,8 @@ class ConfigManager:
             config_validator = ConfigValidator(self.schema)
             config_validator.validate(self.config)
             print("Configuration is valid!")
-        except Exception as e:
-            raise ValueError(f"Validation error from {self.file_path}: {e}")
-
+        except Exception as exc:
+            raise ValueError(f"Validation error from {self.file_path}: {exc}") from exc
     def get_config(self):
         return self.config
 
