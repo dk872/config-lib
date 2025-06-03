@@ -35,9 +35,9 @@ class ConfigManager:
     def get_config(self):
         return self.config
 
-    def print_config(self, masked=False, secret_fields=None):
+    def print_config(self, secret_fields=None):
         config = self.config
-        if masked and secret_fields:
+        if secret_fields:
             config = mask_secrets(config, secret_fields)
         print(config)
 
