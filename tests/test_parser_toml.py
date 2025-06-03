@@ -1,10 +1,4 @@
 import unittest
-import sys
-import os
-
-# Add the parent directory to the Python path so we can import from parsers
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
 from config_lib.parsers.parser_toml import TOMLParser, TOMLSyntaxError, parse_toml_string
 
 
