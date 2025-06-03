@@ -149,20 +149,10 @@ def _parse_list_item(line, current_indent, lines, index, base_index, result):
     return result, index
 
 
-def _parse_key_value_pair(line, current_indent, lines, index, base_index,
-                          result):
-    line_number = base_index + index + 1
-
-    if result is None:
-        result = {}
-    if not isinstance(result, dict):
-        raise YAMLSyntaxError("Mixed list and dict structures are not allowed",
-                              line_number)
-
+def _split_key_value(line, line_number):
     parts = line.lstrip().split(':', 1)
     if len(parts) != 2:
-        raise YAMLSyntaxError("Invalid key-value pair (missing colon)",
-                              line_number)
+        raise YAMLSyntaxError("Invalid key-value pair (missing colon)", line_number)
 
     key_part, value_part = parts
     key = key_part.strip()
@@ -170,14 +160,55 @@ def _parse_key_value_pair(line, current_indent, lines, index, base_index,
 
     if not key:
         raise YAMLSyntaxError("Empty key", line_number)
+
+    return key, value
+
+
+def _parse_nested_value_for_key(lines, index, current_indent, base_index):
+    sub_lines, new_index = _collect_nested_lines(lines, index + 1, current_indent)
+    value = _parse_yaml_lines(sub_lines, current_indent + 2, base_index + index + 1)
+    return value, new_index
+
+
+def _parse_key_value_pair(line, current_indent, lines, index, base_index, result):
+    line_number = base_index + index + 1
+
+    if result is None:
+        result = {}
+    if not isinstance(result, dict):
+        raise YAMLSyntaxError("Mixed list and dict structures are not allowed", line_number)
+
+    key, value = _split_key_value(line, line_number)
+
     if value == '':
-        sub_lines, new_index = _collect_nested_lines(lines, index + 1,
-                                                     current_indent)
-        result[key] = _parse_yaml_lines(sub_lines, current_indent + 2,
-                                        base_index + index + 1)
+        nested_value, new_index = _parse_nested_value_for_key(lines, index, current_indent, base_index)
+        result[key] = nested_value
         return result, new_index - 1
+
     result[key] = _parse_yaml_scalar(value)
     return result, index
+
+
+def _is_list_item(line):
+    return line.lstrip().startswith('- ')
+
+
+def _is_key_value_pair(line):
+    return ':' in line and not _is_list_item(line)
+
+
+def _process_yaml_line(line, current_indent, lines, index, base_index, result, expected_indent):
+    line_number = base_index + index + 1
+
+    if _is_list_item(line):
+        return _parse_list_item(line, current_indent, lines, index, base_index, result), expected_indent
+
+    elif _is_key_value_pair(line):
+        if result is None:
+            expected_indent = current_indent + 2
+        return _parse_key_value_pair(line, current_indent, lines, index, base_index, result), expected_indent
+
+    raise YAMLSyntaxError("Invalid line format", line_number)
 
 
 def _parse_yaml_lines(lines, indent=0, base_index=0):
@@ -186,34 +217,22 @@ def _parse_yaml_lines(lines, indent=0, base_index=0):
     expected_indent = None
 
     while index < len(lines):
-        line_number = base_index + index + 1
         line = lines[index]
+        line_number = base_index + index + 1
 
         if _should_skip_line(line):
             index += 1
             continue
 
         current_indent = _get_line_indent(line)
-
-        _validate_indentation(current_indent, expected_indent, indent, line,
-                              line_number)
+        _validate_indentation(current_indent, expected_indent, indent, line, line_number)
 
         if current_indent < indent:
             break
 
-        if line.lstrip().startswith('- '):
-            result, index = _parse_list_item(line, current_indent, lines,
-                                             index, base_index, result)
-
-        elif ':' in line:
-            if result is None:
-                expected_indent = current_indent + 2
-
-            result, index = _parse_key_value_pair(line, current_indent, lines,
-                                                  index, base_index, result)
-
-        else:
-            raise YAMLSyntaxError("Invalid line format", line_number)
+        (result, index), expected_indent = _process_yaml_line(
+            line, current_indent, lines, index, base_index, result, expected_indent
+        )
 
         index += 1
 

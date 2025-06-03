@@ -114,10 +114,10 @@ class TOMLParser:
         try:
             value = self._parse_value(raw_value)
             self.current_section[key] = value
-        except Exception as e:
-            if isinstance(e, TOMLSyntaxError):
+        except Exception as exc:
+            if isinstance(exc, TOMLSyntaxError):
                 raise
-            raise TOMLSyntaxError(f"Error parsing value for key '{key}': {str(e)}", self.line_number) from e
+            raise TOMLSyntaxError(f"Error parsing value for key '{key}': {str(exc)}", self.line_number) from exc
 
     def _is_valid_key(self, key: str) -> bool:
         """Check if a key is valid (basic validation)."""
@@ -202,8 +202,9 @@ class TOMLParser:
             hex_digits = s[i + 2:i + 6]
             try:
                 return chr(int(hex_digits, 16)), 6
-            except ValueError:
-                raise TOMLSyntaxError(f"Invalid unicode escape sequence: \\u{hex_digits}", self.line_number)
+            except ValueError as exc:
+                raise TOMLSyntaxError(f"Invalid unicode escape sequence: \\u{hex_digits}",
+                                      self.line_number) from exc
 
         # Unknown escape sequence
         return '\\' + next_char, 2

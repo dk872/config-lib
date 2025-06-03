@@ -11,8 +11,8 @@ def parse_json(file_path):
         return parse_json_string(content)
     except JSONSyntaxError as e:
         raise e
-    except Exception as e:
-        raise RuntimeError(f"Error reading JSON: {e}")
+    except Exception as exc:
+        raise RuntimeError(f"Error reading JSON: {exc}") from exc
 
 
 def parse_yaml(file_path):
@@ -22,8 +22,8 @@ def parse_yaml(file_path):
         return parse_yaml_string(content)
     except YAMLSyntaxError as e:
         raise e
-    except Exception as e:
-        raise RuntimeError(f"Error reading YAML: {e}")
+    except Exception as exc:
+        raise RuntimeError(f"Error reading YAML: {exc}") from exc
 
 
 def parse_toml(file_path):
@@ -33,8 +33,8 @@ def parse_toml(file_path):
         return parse_toml_string(content)
     except TOMLSyntaxError as e:
         raise e
-    except Exception as e:
-        raise RuntimeError(f"Error reading TOML: {e}")
+    except Exception as exc:
+        raise RuntimeError(f"Error reading TOML: {exc}") from exc
 
 
 def parse_ini(file_path):
@@ -44,5 +44,5 @@ def parse_ini(file_path):
         return parse_ini_string(content)
     except INISyntaxError as e:
         raise e
-    except Exception as e:
-        raise RuntimeError(f"Error reading INI: {e}")
+    except Exception as exc:
+        raise RuntimeError(f"Error reading INI: {exc}") from exc
