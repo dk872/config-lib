@@ -114,10 +114,10 @@ class TOMLParser:
         try:
             value = self._parse_value(raw_value)
             self.current_section[key] = value
-        except Exception as e:
-            if isinstance(e, TOMLSyntaxError):
+        except Exception as exc:
+            if isinstance(exc, TOMLSyntaxError):
                 raise
-            raise TOMLSyntaxError(f"Error parsing value for key '{key}': {str(e)}", self.line_number) from e
+            raise TOMLSyntaxError(f"Error parsing value for key '{key}': {str(exc)}", self.line_number) from exc
 
     def _is_valid_key(self, key: str) -> bool:
         """Check if a key is valid (basic validation)."""
