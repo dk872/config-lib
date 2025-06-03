@@ -14,7 +14,7 @@ persistence.
 - MongoDB integration for saving/loading configs.
 - Custom schema support.
 
-## How to install
+## Installation
 First, clone the repository and navigate into the project directory:
 ```
 git clone https://github.com/dk872/config-lib
@@ -67,7 +67,6 @@ try:
     manager = ConfigManager("example.json")
 except Exception as e:
     print(e)
-    return
 ```
 When creating an instance of the class, the library will automatically attempt to parse the file.
 
@@ -78,7 +77,6 @@ try:
     manager = ConfigManager("example.json", custom_schema)
 except Exception as e:
     print(e)
-    return
 ```
 
 You don’t need to specify the file location if you’re going to use MongoDB:
