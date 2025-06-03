@@ -186,6 +186,37 @@ def example_mongodb_operations():
         print(e)
 
 
+def example_save_to_file():
+    try:
+        manager = ConfigManager("example.json")
+    except Exception as e:
+        print(e)
+        return
+
+    try:
+        print("\n\n------------------ Example: Save to the file ------------------")
+
+        # You can convert the config back to a file.
+        # This feature can be useful when loading configs from a database.
+        # Or if you want to convert the configuration file to another format.
+        # Let's try converting JSON to YAML.
+        print("\n📄 Original JSON config:")
+        with open('example.json', 'r', encoding='utf-8') as file:
+            content = file.read()
+            print(content)
+
+        # Saving to the new format.
+        print("\n💾 Saving config as YAML:")
+        manager.save_to_file("out.yaml")
+        print("\n📄 Converted YAML config:")
+        with open('out.yaml', 'r', encoding='utf-8') as file:
+            content = file.read()
+            print(content)
+
+    except (ValueError, TypeError) as e:
+        print(e)
+
+
 if __name__ == "__main__":
     example_valid_config()
     example_custom_schema()
@@ -193,3 +224,4 @@ if __name__ == "__main__":
     example_missing_field()
     example_apply_defaults()
     example_mongodb_operations()
+    example_save_to_file()

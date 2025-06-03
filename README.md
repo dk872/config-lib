@@ -183,6 +183,18 @@ except (ValueError, TypeError) as e:
    print(e)
 ```
 
+### save_to_file()
+This function saves the current config to a file of the specified format (JSON, YAML, TOML, INI).
+A new file will be created in the same directory as the program that calls this function.
+
+You can use this function as follows:
+```py
+try:
+   manager.save_to_file("out.yaml")
+except (ValueError, TypeError) as e:
+   print(e)
+```
+
 ### Running the demo file
 You can review the prepared file with usage examples.
 Before running the demo file, be sure to start the MongoDB container with the command:
@@ -207,7 +219,7 @@ cd example
       ```
 
   - **On Windows:**
-      - Make sure Python is installed and added to the system PATH. You can check with:
+    - Make sure Python is installed and added to the system PATH. You can check with:
       ```
       python --version
       ```
