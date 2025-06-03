@@ -3,6 +3,7 @@ from .schema import ConfigSchema
 from .validator import ConfigValidator
 from .utils import fill_defaults, mask_secrets
 from .db import MongoDBHandler
+from .writer import save_config_to_file
 import os
 
 
@@ -31,6 +32,7 @@ class ConfigManager:
             print("Configuration is valid!")
         except Exception as exc:
             raise ValueError(f"Validation error from {self.file_path}: {exc}") from exc
+
     def get_config(self):
         return self.config
 
@@ -67,3 +69,13 @@ class ConfigManager:
             db_handler.delete_config(name)
         except Exception as e:
             print(f"Error deleting configuration: {e}")
+
+    def save_to_file(self, file_path):
+        if self.config is None:
+            print("Error: No configuration loaded to save")
+            return
+        try:
+            save_config_to_file(self.config, file_path)
+            print(f"Configuration successfully saved to {file_path}")
+        except Exception as exc:
+            print(f"Failed to save configuration: {exc}")
